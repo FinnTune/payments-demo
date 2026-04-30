@@ -1,0 +1,48 @@
+# Java
+backend/target/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+
+# Node
+node_modules/
+dist/
+.npm
+.pnpm-store/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+coverage.xml
+
+# CDK
+infra/cdk.out/
+*.d.ts
+infra/bin/*.js
+infra/lib/*.js
+infra/test/*.js
+
+# Env
+.env
+.env.local
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / scan output
+*.sarif
+trivy*.json
+infra/cdk.context.json
