@@ -46,3 +46,4 @@ Thumbs.db
 *.sarif
 trivy*.json
 infra/cdk.context.json
+prog/
