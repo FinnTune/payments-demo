@@ -5,6 +5,7 @@ import com.example.payments.domain.PaymentStatus;
 import com.example.payments.dto.PaymentDtos.CreatePaymentRequest;
 import com.example.payments.gateway.PaymentGateway;
 import com.example.payments.repository.PaymentRepository;
+import com.example.payments.exception.PaymentNotFoundException;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 /**
@@ -114,7 +114,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public Payment getById(UUID id) {
         return repo.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Payment not found: " + id));
+                .orElseThrow(() -> new PaymentNotFoundException(id));
     }
 
     @Transactional
