@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,10 +15,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payments", indexes = {
-        @Index(name = "idx_payments_customer_created", columnList = "customer_id, created_at DESC"),
-        @Index(name = "idx_payments_status_created",   columnList = "status, created_at")
-})
+@Table(name = "payments")
 public class Payment {
 
     @Id
