@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: payments-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/payments}
+    username: ${DB_USER:payments}
+    password: ${DB_PASSWORD:payments}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

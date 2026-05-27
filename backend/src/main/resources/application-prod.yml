@@ -1,0 +1,28 @@
+# Production-specific overrides.
+# Loaded when SPRING_PROFILES_ACTIVE=prod is set.
+# Anything not specified here inherits from application.yml.
+
+spring:
+  jpa:
+    show-sql: false                     # SQL in prod logs is noise
+
+server:
+  shutdown: graceful                    # finish in-flight requests on SIGTERM
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only expose health (for load balancers) and prometheus (for scraping).
+        # Locking down to fewer endpoints reduces attack surface in prod.
+        include: health,prometheus
+
+  endpoint:
+    health:
+      probes:
+        enabled: true                   # /actuator/health/liveness and /readiness
+      show-details: never               # never leak internal details to anonymous
+
+logging:
+  config: classpath:logback-spring-prod.xml   # JSON-structured logging

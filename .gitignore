@@ -47,3 +47,4 @@ Thumbs.db
 trivy*.json
 infra/cdk.context.json
 prog/
+.vscode/

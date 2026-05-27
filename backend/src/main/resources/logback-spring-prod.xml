@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- JSON-structured logging for production.
+         Log aggregators (CloudWatch, Datadog, Loki, ELK) ingest JSON natively.
+         Each log line becomes a queryable record. -->
+
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern>
+                </timestamp>
+                <version>
+                    <fieldName>version</fieldName>
+                </version>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+                <stackTrace>
+                    <fieldName>stackTrace</fieldName>
+                </stackTrace>
+                <mdc/>
+                <pattern>
+                    <pattern>
+                        {
+                            "service": "payments-service",
+                            "env": "prod"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="JSON"/>
+    </root>
+
+</configuration>
