@@ -1,122 +1,167 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import {
+  createPayment,
+  type CreatePaymentRequest,
+  type PaymentResponse,
+  type ApiError,
+  type Currency,
+} from "./api/payments";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+type FormState = {
+  amount: string;
+  currency: Currency;
+  customerId: string;
+  paymentMethodToken: string;
+};
+
+type UiState =
+  | { phase: "idle" }
+  | { phase: "submitting" }
+  | { phase: "success"; payment: PaymentResponse }
+  | { phase: "error"; error: ApiError };
+
+const DEFAULT_FORM: FormState = {
+  amount: "12.50",
+  currency: "EUR",
+  customerId: "cust_demo",
+  paymentMethodToken: "tok_visa",
+};
+
+export default function App() {
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [ui, setUi] = useState<UiState>({ phase: "idle" });
+
+  const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setUi({ phase: "submitting" });
+
+    const req: CreatePaymentRequest = {
+      amount: form.amount,
+      currency: form.currency,
+      customerId: form.customerId,
+      paymentMethodToken: form.paymentMethodToken,
+    };
+
+    // No real JWT yet (no OAuth2 issuer wired up). The backend's
+    // SecurityConfig.java currently has /api/v1/payments/** permitAll
+    // during local dev, so the empty token is accepted.
+    const result = await createPayment(req, "");
+
+    if (result.ok) {
+      setUi({ phase: "success", payment: result.value });
+    } else {
+      setUi({ phase: "error", error: result.error });
+    }
+  };
+
+  const resetToIdle = () => setUi({ phase: "idle" });
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+    <div className="app">
+      <h1>Payments Demo</h1>
+
+      <form onSubmit={handleSubmit} className="payment-form">
+        <label>
+          Amount
+          <input
+            type="text"
+            value={form.amount}
+            onChange={(e) => updateField("amount", e.target.value)}
+            disabled={ui.phase === "submitting"}
+            required
+          />
+        </label>
+
+        <label>
+          Currency
+          <select
+            value={form.currency}
+            onChange={(e) => updateField("currency", e.target.value as Currency)}
+            disabled={ui.phase === "submitting"}
+          >
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </label>
+
+        <label>
+          Customer ID
+          <input
+            type="text"
+            value={form.customerId}
+            onChange={(e) => updateField("customerId", e.target.value)}
+            disabled={ui.phase === "submitting"}
+            required
+          />
+        </label>
+
+        <label>
+          Payment Method Token
+          <input
+            type="text"
+            value={form.paymentMethodToken}
+            onChange={(e) => updateField("paymentMethodToken", e.target.value)}
+            disabled={ui.phase === "submitting"}
+            required
+          />
+        </label>
+
+        <button type="submit" disabled={ui.phase === "submitting"}>
+          {ui.phase === "submitting" ? "Submitting…" : "Submit Payment"}
         </button>
-      </section>
+      </form>
 
-      <div className="ticks"></div>
+      {ui.phase === "success" && (
+        <ResultPanel kind="success" onReset={resetToIdle}>
+          <h2>Payment {ui.payment.status}</h2>
+          <dl>
+            <dt>ID</dt>            <dd>{ui.payment.id}</dd>
+            <dt>Amount</dt>         <dd>{ui.payment.amount} {ui.payment.currency}</dd>
+            <dt>Status</dt>         <dd>{ui.payment.status}</dd>
+            {ui.payment.authCode && (
+              <>
+                <dt>Auth Code</dt>  <dd>{ui.payment.authCode}</dd>
+              </>
+            )}
+            {ui.payment.declineReason && (
+              <>
+                <dt>Decline Reason</dt> <dd>{ui.payment.declineReason}</dd>
+              </>
+            )}
+            <dt>Created</dt>        <dd>{ui.payment.createdAt}</dd>
+          </dl>
+        </ResultPanel>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {ui.phase === "error" && (
+        <ResultPanel kind="error" onReset={resetToIdle}>
+          <h2>Error</h2>
+          <dl>
+            <dt>Code</dt>      <dd>{ui.error.code}</dd>
+            <dt>Message</dt>   <dd>{ui.error.message}</dd>
+            <dt>Timestamp</dt> <dd>{ui.error.timestamp}</dd>
+          </dl>
+        </ResultPanel>
+      )}
+    </div>
+  );
 }
 
-export default App
+function ResultPanel(props: {
+  kind: "success" | "error";
+  onReset: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`result result-${props.kind}`}>
+      {props.children}
+      <button onClick={props.onReset}>New payment</button>
+    </div>
+  );
+}
