@@ -48,3 +48,15 @@ trivy*.json
 infra/cdk.context.json
 prog/
 .vscode/
+
+# Python
+recon/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.coverage
+**/htmlcov/
+**/*.egg-info/
+**/build/
+**/dist/
