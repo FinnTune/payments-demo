@@ -1,0 +1,5 @@
+payment_id,amount,currency
+p001,10.00,EUR
+p002,25.50,EUR
+p003,100.00,USD
+p004,7.99,GBP

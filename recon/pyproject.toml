@@ -2,7 +2,7 @@
 name = "recon"
 version = "0.1.0"
 description = "Payment reconciliation between internal records and gateway settlement files"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = []
 
 [project.optional-dependencies]
@@ -29,11 +29,11 @@ addopts = "-ra --strict-markers"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "RUF"]
 
 [tool.mypy]
 strict = true
-python_version = "3.11"
+python_version = "3.12"
