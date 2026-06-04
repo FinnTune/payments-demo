@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { App } from 'aws-cdk-lib';
 import { NetworkStack } from '../lib/network-stack';
+import { AuthStack } from '../lib/auth-stack';
 
 const app = new App();
 
@@ -10,3 +11,4 @@ const env = {
 };
 
 new NetworkStack(app, 'PaymentsNetwork', { env });
+new AuthStack(app, 'PaymentsAuth', { env });
