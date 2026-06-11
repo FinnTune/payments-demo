@@ -5,6 +5,11 @@
 spring:
   jpa:
     show-sql: false                     # SQL in prod logs is noise
+  security:
+  oauth2:
+    resourceserver:
+      jwt:
+        issuer-uri: ${JWT_ISSUER_URI}
 
 server:
   shutdown: graceful                    # finish in-flight requests on SIGTERM
