@@ -48,7 +48,9 @@ interface ServiceStackProps extends StackProps {
  * - Autoscaling 1-10 tasks based on CPU.
  */
 export class ServiceStack extends Stack {
-  constructor(scope: Construct, id: string, props: ServiceStackProps) {
+    public readonly cluster: Cluster;
+  
+    constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
 
     // ---------- ECR repository ----------
@@ -65,11 +67,11 @@ export class ServiceStack extends Stack {
     });
 
     // ---------- ECS Cluster ----------
-    const cluster = new Cluster(this, 'PaymentsCluster', {
+    this.cluster = new Cluster(this, 'PaymentsCluster', {
         vpc: props.vpc,
         clusterName: 'payments-cluster',
         containerInsightsV2: ContainerInsights.ENABLED,
-      });
+    });
 
     // ---------- Log group ----------
     const logGroup = new LogGroup(this, 'PaymentsLogs', {
@@ -128,7 +130,7 @@ export class ServiceStack extends Stack {
       );
 
       const service = new FargateService(this, 'PaymentsService', {
-        cluster,
+        cluster: this.cluster,
         taskDefinition,
         desiredCount: 2,
         vpcSubnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
