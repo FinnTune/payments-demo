@@ -18,9 +18,10 @@ import {
   Secret as EcsSecret,
 } from 'aws-cdk-lib/aws-ecs';
 import {
-  ApplicationLoadBalancer,
-  ApplicationProtocol,
-} from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+    ApplicationLoadBalancer,
+    ApplicationProtocol,
+    ApplicationTargetGroup,
+  } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Repository } from 'aws-cdk-lib/aws-ecr';
 import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { DatabaseInstance } from 'aws-cdk-lib/aws-rds';
@@ -49,6 +50,8 @@ interface ServiceStackProps extends StackProps {
  */
 export class ServiceStack extends Stack {
     public readonly cluster: Cluster;
+    public readonly loadBalancer: ApplicationLoadBalancer;
+    public readonly targetGroup: ApplicationTargetGroup;
   
     constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
@@ -119,17 +122,17 @@ export class ServiceStack extends Stack {
         vpc: props.vpc,
         description: 'Allow ALB → ECS task traffic',
         allowAllOutbound: false,
-      });
+    });
       
-      // The task needs HTTPS outbound to reach AWS service APIs (Secrets
-      // Manager, ECR, CloudWatch Logs) and the Cognito JWKs endpoint.
-      serviceSecurityGroup.addEgressRule(
-        Peer.anyIpv4(),
-        Port.tcp(443),
-        'HTTPS to AWS APIs and Cognito',
-      );
+    // The task needs HTTPS outbound to reach AWS service APIs (Secrets
+    // Manager, ECR, CloudWatch Logs) and the Cognito JWKs endpoint.
+    serviceSecurityGroup.addEgressRule(
+    Peer.anyIpv4(),
+    Port.tcp(443),
+    'HTTPS to AWS APIs and Cognito',
+    );
 
-      const service = new FargateService(this, 'PaymentsService', {
+    const service = new FargateService(this, 'PaymentsService', {
         cluster: this.cluster,
         taskDefinition,
         desiredCount: 2,
@@ -146,7 +149,7 @@ export class ServiceStack extends Stack {
         // means deploys spin up 2 new tasks before draining the old 2.
         minHealthyPercent: 100,
         maxHealthyPercent: 200,
-      });
+    });
 
     // Allow the service to reach the database on its default port (5432).
     // CDK's connections API handles cross-stack security group rules
@@ -155,20 +158,20 @@ export class ServiceStack extends Stack {
     service.connections.allowToDefaultPort(props.database, 'Postgres from payments service');
 
     // ---------- ALB ----------
-    const alb = new ApplicationLoadBalancer(this, 'PaymentsAlb', {
-      vpc: props.vpc,
-      internetFacing: true,
-      vpcSubnets: { subnetType: SubnetType.PUBLIC },
+    this.loadBalancer = new ApplicationLoadBalancer(this, 'PaymentsAlb', {
+        vpc: props.vpc,
+        internetFacing: true,
+        vpcSubnets: { subnetType: SubnetType.PUBLIC },
     });
 
-    const listener = alb.addListener('Http', {
-        port: 80,
-        protocol: ApplicationProtocol.HTTP,
+    const listener = this.loadBalancer.addListener('Http', {
+    port: 80,
+    protocol: ApplicationProtocol.HTTP,
         // In real production: redirect to 443 instead. We don't have
         // an ACM cert in this demo.
-      });
+    });
 
-    listener.addTargets('PaymentsTargets', {
+    this.targetGroup = listener.addTargets('PaymentsTargets', {
       port: 8080,
       protocol: ApplicationProtocol.HTTP,
       targets: [service],
@@ -188,6 +191,7 @@ export class ServiceStack extends Stack {
       minCapacity: 1,
       maxCapacity: 10,
     });
+
     scaling.scaleOnCpuUtilization('CpuScaling', {
       targetUtilizationPercent: 60,
       scaleInCooldown: Duration.seconds(300),
@@ -242,7 +246,7 @@ export class ServiceStack extends Stack {
     });
 
     new CfnWebACLAssociation(this, 'PaymentsWafAssociation', {
-      resourceArn: alb.loadBalancerArn,
+      resourceArn: this.loadBalancer.loadBalancerArn,
       webAclArn: webAcl.attrArn,
     });
 

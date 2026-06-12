@@ -5,6 +5,7 @@ import { AuthStack } from '../lib/auth-stack';
 import { DataStack } from '../lib/data-stack';
 import { ServiceStack } from '../lib/service-stack';
 import { ReconStack } from '../lib/recon-stack';
+import { ObservabilityStack } from '../lib/observability-stack';
 
 const app = new App();
 
@@ -30,4 +31,11 @@ new ReconStack(app, 'PaymentsRecon', {
   env,
   vpc: network.vpc,
   cluster: service.cluster,
+});
+
+new ObservabilityStack(app, 'PaymentsObservability', {
+  env,
+  database: data.database,
+  loadBalancer: service.loadBalancer,
+  targetGroup: service.targetGroup,
 });
