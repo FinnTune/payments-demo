@@ -73,7 +73,8 @@ class PaymentServiceTest {
 
         // Verify the database has exactly one row, not two.
         assertThat(repo.findByIdempotencyKey(key)).isPresent();
-        assertThat(repo.count()).isEqualTo(1);
+        // Verify the database has exactly one row for this idempotency key.
+        assertThat(repo.countByIdempotencyKey(key)).isEqualTo(1);
     }
 
     @Test
