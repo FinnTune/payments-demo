@@ -1,0 +1,62 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  test:
+    name: Test & build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: payments
+          POSTGRES_PASSWORD: payments
+          POSTGRES_DB: payments
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U payments"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compile
+        run: ./mvnw clean compile -B
+
+      - name: Run tests
+        run: ./mvnw test -B
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/payments
+          SPRING_DATASOURCE_USERNAME: payments
+          SPRING_DATASOURCE_PASSWORD: payments
+
+      - name: Package JAR
+        run: ./mvnw package -DskipTests -B
+
+      - name: Build Docker image
+        run: docker build -t payments-service:${{ github.sha }} .
